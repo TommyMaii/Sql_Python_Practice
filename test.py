@@ -42,12 +42,35 @@ engine = create_engine(db_url)
 
 # Prøv å counte hvor mange om dager med flest ordre på toppen gruppert på måneder.
 query = """
+WITH daily_counts AS (
+  SELECT 
+    DATE_TRUNC('month', order_date) AS month,
+    order_date AS day,
+    COUNT(CASE WHEN order_status = 'Completed' THEN 1 END) AS dailyOrders
+  FROM orders
+  GROUP BY month, day
+),
+monthly_totals AS (
+  SELECT 
+    DATE_TRUNC('month', order_date) AS month,
+    COUNT(CASE WHEN order_status = 'Completed' THEN 1 END) AS monthlyOrders
+  FROM orders
+  GROUP BY month
+),
+highest_days AS (
+  SELECT 
+    d.*,
+    ROW_NUMBER() OVER (PARTITION BY d.month ORDER BY d.dailyOrders DESC, d.day) AS day_rank
+  FROM daily_counts d
+)
 SELECT 
-DATE(DATE_TRUNC('month', order_date)) AS months,
-COUNT (CASE WHEN order_status = 'Completed' THEN 1 END) AS "monthlyOrders"
-FROM orders
-GROUP BY months
-ORDER BY months asc
+  COALESCE(TO_CHAR(CASE WHEN h.day_rank = 1 THEN h.month ELSE NULL END, 'YYYY-MM-DD'), '') AS month,
+  TO_CHAR(h.day, 'YYYY-MM-DD') AS day,
+  h.dailyOrders,
+  COALESCE(CAST(CASE WHEN h.day_rank = 1 THEN m.monthlyOrders ELSE NULL END AS TEXT), '') AS monthlyOrders
+FROM highest_days h
+JOIN monthly_totals m ON h.month = m.month
+ORDER BY h.month, h.day_rank;
 """
 
 
@@ -55,8 +78,8 @@ df = pd.read_sql(query, engine)
 
 ax = df.plot(
     kind='bar',
-    x='months',
-    y='monthlyOrders',
+    x='month',
+    y=['dailyorders','monthlyorders'],
     color='#4CAF50',  # custom green
     figsize=(10, 6),
     legend=False,
