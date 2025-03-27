@@ -1,0 +1,51 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Environment variables
+.env
+.env.*
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# SQLite or other local DBs
+*.sqlite3
+*.db
+
+# Logs
+*.log
+
+# Cache
+.cache/
+*.egg-info/
+dist/
+build/
+
+# mypy, coverage, test stuff
+.mypy_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# If you're using Poetry or Pipenv
+poetry.lock
+Pipfile.lock
